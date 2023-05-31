@@ -18,11 +18,11 @@ using namespace std;
 #define arrsum(x) accumulate(all(x), 0LL)
 #define arrpre(x) partial_sum(all(x), x.begin())
 #define arrsuf(x) partial_sum(allr(x), x.rbegin()) 
-#define len(x) (int) (x).size()
+#define len(x) (ll) (x).size()
 #define pb push_back
 #define eb emplace_back
 #define rep(x,start,end) for(auto x=(start)-((start)>(end));x!=(end)-((start)>(end));((start)<(end)?x++:x--))
-#define pii pair<int,int>
+#define pii pair<ll,ll>
 #define pll pair<ll,ll>
 #define strline(s)               \
     string s;                      \
@@ -56,131 +56,76 @@ template<typename T, typename U> void umax(T& a, U b){if (a < b) a = b;}
 
 ll MOD = 1e9 + 7;//1e9-7
 const ll inf = 1e18;
-const int N = 200007;
+const ll N = 200007;
 const double PI =  acos(-1.0);
 
-
-struct range {
-    ll left;
-    ll right;
-    ll index;
-};
-bool compare(range r1, range r2) {
-      if (r1.left < r2.left)
-            return true;
-      if (r1.left > r2.left)
-            return false;
-      return r1.right > r2.right;
-}
-bool compare1(pll p1, pll p2) {
-      if (p1.ft < p2.ft)
-            return true;
-      if (p1.ft > p2.ft)
-            return false;
-      return p1.sc > p2.sc;
-}
-
-
-
-void update(ll start, vll &tree, ll n, ll value) {
-      for (; start <= n; start += start & (-start))
-            tree[start] += value;
-}
-int query(int start, vll &tree) {
-      int sum = 0;
-      for (; start > 0; start -= start & (-start))
-            sum += tree[start];
-      return sum;
-}
-
-
-
-void soln() 
+vector<vll>adj(N);
+vll indegree(N,0);
+vll vis(N,0);   
+vll paths;
+bool kahnAlgo(int n, vll &ans)
 {
-
-      ll n;
-      cin >> n;
-      vector<range> v1(n);
-      vll BIT1(n + 1, 0ll);
-      for (int i = 0; i < n; i++) {
-            ll left, right;
-            cin >> left >> right;
-            v1[i] = {left, right, i};
-      }
-      sort(all(v1), compare);
-
-
-      vector<pll> opening(n);
-      vector<pll> closing(n);
-
-
-      for (int i = 0; i < n; i++) 
-      {
-            opening[i] = {v1[i].left, v1[i].index};
-            closing[i] = {v1[i].right, i};
-      }
-
-
-      sort(all(closing), compare1);
-      int i = 0, j = 0;
-      vll ans(n);
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft) 
-            {
-                  update(i + 1, BIT1, n, 1);
-                  i++;
+        queue<int> q;
+        for (int i = 1; i <= n; i++)
+        {
+            if (indegree[i] == 0){
+                q.push(i);
             }
-            else 
+        }
+
+        int count = 0;
+        while (!q.empty())
+        {
+            int curr = q.front();
+            q.pop();
+
+            for (auto a : adj[curr])
             {
-                  update(closing[j].sc + 1, BIT1, n, -1);
-                  int val = query(closing[j].sc + 1, BIT1);
-
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans[actual_index] = val;
-                  j++;
+                indegree[a] -= 1;
+                if (indegree[a] == 0)
+                    q.push(a);
             }
-      }
+            ans.push_back(curr);
+            count++;
+        }
 
-      vll ans2(n);
-      vll BIT2(n + 1, 0ll);
-      i = 0, j = 0;
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft)i++;
-            else 
-            {
-                  int val = query(closing[j].sc + 1, BIT2);
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans2[actual_index] = val;
-
-
-                  update(1, BIT2, n, 1);
-                  if (closing[j].sc + 2 <= n)update(closing[j].sc + 2, BIT2, n, -1);
-                  j++;
-            }
-      }
-
-
-    for(auto it:ans2)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
-    for(auto it:ans)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
+        // checking for DAG.
+        if (count != n)
+            return false;
+        return true;
 }
+
+ 
+void soln()
+{
+	ll n;cin>>n;
+    ll m;cin>>m;
+    while(m--)
+    {
+        ll x;cin>>x;
+        ll y;cin>>y;
+        adj[x].pb(y);
+        indegree[y]++;
+    }
+    if(kahnAlgo(n,paths))
+    {
+        cout<<"IMPOSSIBLE";
+    }
+
+    cout<<len(paths);
+    line;
+    cout<<paths;
+}   
  
 int main()
 {
-    int tt;
+    ll tt;
     ios_base::sync_with_stdio(false);
     cin.tie(NULL);
 
     tt=1;
     // cin>>tt;
-    //int p=1;
+    //ll p=1;
 
     while(tt--)
     {

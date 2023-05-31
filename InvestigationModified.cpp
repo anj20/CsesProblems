@@ -59,118 +59,83 @@ const ll inf = 1e18;
 const int N = 200007;
 const double PI =  acos(-1.0);
 
+// vector<vll>adj(N);
+vll vis(N,0);   
+// vector<vi> dp(N+1,vi(N+1,0)); 
 
-struct range {
-    ll left;
-    ll right;
-    ll index;
-};
-bool compare(range r1, range r2) {
-      if (r1.left < r2.left)
-            return true;
-      if (r1.left > r2.left)
-            return false;
-      return r1.right > r2.right;
-}
-bool compare1(pll p1, pll p2) {
-      if (p1.ft < p2.ft)
-            return true;
-      if (p1.ft > p2.ft)
-            return false;
-      return p1.sc > p2.sc;
-}
+vector<vector<pll>>adj(N);
+set <pll> S;
+ll d[N], path[N];
+int nominroutes[N];
+int minflights[N],maxflights[N];
+ll binpow(ll a, ll b, ll mod) {ll res = 1; while (b > 0) {if (b & 1)res = (res * a) % mod; a = (a * a) % mod; b = b >> 1;} return res;}
+ll invprime(ll a, ll b) {return binpow(a, b - 2, b);}
+ll mod_add(ll a, ll b, ll m) {a = a % m; b = b % m; return (((a + b) % m) + m) % m;}
+ll mod_mul(ll a, ll b, ll m) {a = a % m; b = b % m; return (((a * b) % m) + m) % m;}
+ll mod_sub(ll a, ll b, ll m) {a = a % m; b = b % m; return (((a - b) % m) + m) % m;}
+ll mod_div(ll a, ll b, ll m) {a = a % m; b = b % m; return (mod_mul(a, invprime(b, m), m) + m) % m;} 
+ll phin(ll n) {ll number = n; if (n % 2 == 0) {number /= 2; while (n % 2 == 0) n /= 2;} for (ll i = 3; i <= sqrt(n); i += 2) {if (n % i == 0) {while (n % i == 0)n /= i; number = (number / i * (i - 1));}} if (n > 1)number = (number / n * (n - 1)) ; return number;} //O(sqrt(N))
 
 
 
-void update(ll start, vll &tree, ll n, ll value) {
-      for (; start <= n; start += start & (-start))
-            tree[start] += value;
-}
-int query(int start, vll &tree) {
-      int sum = 0;
-      for (; start > 0; start -= start & (-start))
-            sum += tree[start];
-      return sum;
-}
-
-
-
-void soln() 
+void dijkstra(ll src)
 {
+    for (int node = 1; node <= N; node++)
+    {
+        d[node] = inf;
+        nominroutes[node]=0;
+        minflights[node]=INT_MAX;
+        maxflights[node]=INT_MIN;
+    }
+    nominroutes[src]=1;
+    minflights[src]=0;
+    maxflights[src]=0;
+    d[src] = 0;
+    S.insert({d[src], src}); // dis,node
+    while (!S.empty())
+    {
+        int node = S.begin()->second; S.erase(S.begin());
 
-      ll n;
-      cin >> n;
-      vector<range> v1(n);
-      vll BIT1(n + 1, 0ll);
-      for (int i = 0; i < n; i++) {
-            ll left, right;
-            cin >> left >> right;
-            v1[i] = {left, right, i};
-      }
-      sort(all(v1), compare);
-
-
-      vector<pll> opening(n);
-      vector<pll> closing(n);
-
-
-      for (int i = 0; i < n; i++) 
-      {
-            opening[i] = {v1[i].left, v1[i].index};
-            closing[i] = {v1[i].right, i};
-      }
-
-
-      sort(all(closing), compare1);
-      int i = 0, j = 0;
-      vll ans(n);
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft) 
+        for (auto child:adj[node])
+        {
+            ll adjNode = child.ft, edgeLength = child.sc;
+            if (d[adjNode] > d[node] + edgeLength)
             {
-                  update(i + 1, BIT1, n, 1);
-                  i++;
+
+                S.erase({d[adjNode], adjNode});
+                d[adjNode] = d[node] + edgeLength, path[adjNode] = node;
+            	nominroutes[adjNode]=nominroutes[node];
+                minflights[adjNode]=minflights[node]+1;
+                maxflights[adjNode]=maxflights[node]+1;
+                S.insert({d[adjNode], adjNode});
             }
-            else 
+            else if(d[adjNode] == d[node] + edgeLength)
             {
-                  update(closing[j].sc + 1, BIT1, n, -1);
-                  int val = query(closing[j].sc + 1, BIT1);
-
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans[actual_index] = val;
-                  j++;
+            	nominroutes[adjNode]=mod_add(nominroutes[node],nominroutes[adjNode],MOD);
+            	minflights[adjNode]=min(minflights[node]+1,minflights[adjNode]);
+            	maxflights[adjNode]=max(maxflights[node]+1,maxflights[adjNode]);
             }
-      }
-
-      vll ans2(n);
-      vll BIT2(n + 1, 0ll);
-      i = 0, j = 0;
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft)i++;
-            else 
-            {
-                  int val = query(closing[j].sc + 1, BIT2);
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans2[actual_index] = val;
-
-
-                  update(1, BIT2, n, 1);
-                  if (closing[j].sc + 2 <= n)update(closing[j].sc + 2, BIT2, n, -1);
-                  j++;
-            }
-      }
-
-
-    for(auto it:ans2)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
-    for(auto it:ans)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
+        }
+    }
 }
+
+void soln()
+{
+	ll n;cin>>n;
+	ll m;cin>>m;
+	while(m--)
+	{
+		ll a;cin>>a;
+		ll b;cin>>b;
+		ll w;cin>>w;
+		adj[a].pb({b,w});
+	}
+
+	dijkstra(1);
+
+	cout<<d[n]<<' '<<nominroutes[n]<<' '<<
+		minflights[n]<<' '<<maxflights[n];
+}   
  
 int main()
 {

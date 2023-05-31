@@ -2,7 +2,6 @@
 //....................AUTHOR:-Anurag
  
 #include <bits/stdc++.h>
-
 using namespace std;
 
 //bultin functions
@@ -59,118 +58,55 @@ const ll inf = 1e18;
 const int N = 200007;
 const double PI =  acos(-1.0);
 
-
-struct range {
-    ll left;
-    ll right;
-    ll index;
-};
-bool compare(range r1, range r2) {
-      if (r1.left < r2.left)
-            return true;
-      if (r1.left > r2.left)
-            return false;
-      return r1.right > r2.right;
-}
-bool compare1(pll p1, pll p2) {
-      if (p1.ft < p2.ft)
-            return true;
-      if (p1.ft > p2.ft)
-            return false;
-      return p1.sc > p2.sc;
-}
-
-
-
-void update(ll start, vll &tree, ll n, ll value) {
-      for (; start <= n; start += start & (-start))
-            tree[start] += value;
-}
-int query(int start, vll &tree) {
-      int sum = 0;
-      for (; start > 0; start -= start & (-start))
-            sum += tree[start];
-      return sum;
-}
-
-
-
-void soln() 
+vector<vi>adj(N);
+// vll vis(N,0);   
+// vector<vi> dp(N+1,vi(N+1,0)); 
+vi indegree(N,0);
+bool kahnAlgo(int n, vector<int> &ans)
 {
+    queue<int> q;
+    for (int i = 1; i <= n; i++)
+    {
+        if (indegree[i] == 0)q.push(i);
+	}
+    int count = 0;
+	while (!q.empty())
+    {
+        int curr = q.front();
+        q.pop();
 
-      ll n;
-      cin >> n;
-      vector<range> v1(n);
-      vll BIT1(n + 1, 0ll);
-      for (int i = 0; i < n; i++) {
-            ll left, right;
-            cin >> left >> right;
-            v1[i] = {left, right, i};
-      }
-      sort(all(v1), compare);
-
-
-      vector<pll> opening(n);
-      vector<pll> closing(n);
-
-
-      for (int i = 0; i < n; i++) 
-      {
-            opening[i] = {v1[i].left, v1[i].index};
-            closing[i] = {v1[i].right, i};
-      }
-
-
-      sort(all(closing), compare1);
-      int i = 0, j = 0;
-      vll ans(n);
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft) 
+            for (auto a : adj[curr])
             {
-                  update(i + 1, BIT1, n, 1);
-                  i++;
+                indegree[a]--;
+                if (indegree[a] == 0)
+                    q.push(a);
             }
-            else 
-            {
-                  update(closing[j].sc + 1, BIT1, n, -1);
-                  int val = query(closing[j].sc + 1, BIT1);
-
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans[actual_index] = val;
-                  j++;
-            }
-      }
-
-      vll ans2(n);
-      vll BIT2(n + 1, 0ll);
-      i = 0, j = 0;
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft)i++;
-            else 
-            {
-                  int val = query(closing[j].sc + 1, BIT2);
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans2[actual_index] = val;
-
-
-                  update(1, BIT2, n, 1);
-                  if (closing[j].sc + 2 <= n)update(closing[j].sc + 2, BIT2, n, -1);
-                  j++;
-            }
-      }
-
-
-    for(auto it:ans2)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
-    for(auto it:ans)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
+            ans.push_back(curr);
+            count++;
+	}
+    // checking for DAG.
+  	if (count != n)return true;
+	return false;
 }
+
+
+
+void soln()
+{
+	ll n;cin>>n;
+	ll m;cin>>m;
+	while(m--)
+	{
+		ll x;cin>>x;
+		ll y;cin>>y;
+		adj[x].pb(y);
+		indegree[y]++;
+	}
+	vi ans;
+	bool check=kahnAlgo(n,ans);
+	if(check){cout<<"IMPOSSIBLE";return;}
+	cout<<ans;
+}   
  
 int main()
 {

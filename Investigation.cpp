@@ -59,118 +59,89 @@ const ll inf = 1e18;
 const int N = 200007;
 const double PI =  acos(-1.0);
 
+// vector<vll>adj(N);
+vll vis(N,0);   
+// vector<vi> dp(N+1,vi(N+1,0)); 
 
-struct range {
-    ll left;
-    ll right;
-    ll index;
-};
-bool compare(range r1, range r2) {
-      if (r1.left < r2.left)
-            return true;
-      if (r1.left > r2.left)
-            return false;
-      return r1.right > r2.right;
-}
-bool compare1(pll p1, pll p2) {
-      if (p1.ft < p2.ft)
-            return true;
-      if (p1.ft > p2.ft)
-            return false;
-      return p1.sc > p2.sc;
-}
-
-
-
-void update(ll start, vll &tree, ll n, ll value) {
-      for (; start <= n; start += start & (-start))
-            tree[start] += value;
-}
-int query(int start, vll &tree) {
-      int sum = 0;
-      for (; start > 0; start -= start & (-start))
-            sum += tree[start];
-      return sum;
-}
-
-
-
-void soln() 
+vector<vector<pll>>adj(N);
+set <pll> S;
+ll d[N], path[N];
+void dijkstra(ll src)
 {
+    for (int node = 1; node <= N; node++)
+        d[node] = inf;
 
-      ll n;
-      cin >> n;
-      vector<range> v1(n);
-      vll BIT1(n + 1, 0ll);
-      for (int i = 0; i < n; i++) {
-            ll left, right;
-            cin >> left >> right;
-            v1[i] = {left, right, i};
-      }
-      sort(all(v1), compare);
+    d[src] = 0;
+    S.insert({d[src], src}); // dis,node
+    while (!S.empty())
+    {
+        int node = S.begin()->second; S.erase(S.begin());
 
-
-      vector<pll> opening(n);
-      vector<pll> closing(n);
-
-
-      for (int i = 0; i < n; i++) 
-      {
-            opening[i] = {v1[i].left, v1[i].index};
-            closing[i] = {v1[i].right, i};
-      }
-
-
-      sort(all(closing), compare1);
-      int i = 0, j = 0;
-      vll ans(n);
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft) 
+        for (auto child:adj[node])
+        {
+            ll adjNode = child.ft, edgeLength = child.sc;
+            if (d[adjNode] > d[node] + edgeLength)
             {
-                  update(i + 1, BIT1, n, 1);
-                  i++;
+                S.erase({d[adjNode], adjNode});
+                d[adjNode] = d[node] + edgeLength, path[adjNode] = node;
+                S.insert({d[adjNode], adjNode});
             }
-            else 
-            {
-                  update(closing[j].sc + 1, BIT1, n, -1);
-                  int val = query(closing[j].sc + 1, BIT1);
-
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans[actual_index] = val;
-                  j++;
-            }
-      }
-
-      vll ans2(n);
-      vll BIT2(n + 1, 0ll);
-      i = 0, j = 0;
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft)i++;
-            else 
-            {
-                  int val = query(closing[j].sc + 1, BIT2);
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans2[actual_index] = val;
-
-
-                  update(1, BIT2, n, 1);
-                  if (closing[j].sc + 2 <= n)update(closing[j].sc + 2, BIT2, n, -1);
-                  j++;
-            }
-      }
-
-
-    for(auto it:ans2)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
-    for(auto it:ans)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
+        }
+    }
 }
+
+int nominroutes=0;
+int minflights=INT_MAX,maxflights=INT_MIN;
+
+void dfs(int root,vi& path,int w,int dst)
+{
+	vis[root]=1;
+	// cout<<root;
+	if(root==dst)
+	{
+		path.pb(dst);
+		if(w==d[dst])
+		{
+			nominroutes++;
+			minflights=min((int)path.size(),minflights);
+			maxflights=max((int)path.size(),maxflights);
+		}
+		path.pop_back();
+		vis[dst]=0;
+		return;
+	}
+	path.pb(root);
+	for(auto child:adj[root])
+	{
+		int node=child.ft,weigh=child.sc;
+		if(vis[node])continue;
+		dfs(node,path,weigh+w,dst);
+	}
+	vis[root]=0;
+	path.pop_back();
+}
+
+
+void soln()
+{
+	ll n;cin>>n;
+	ll m;cin>>m;
+	while(m--)
+	{
+		ll a;cin>>a;
+		ll b;cin>>b;
+		ll w;cin>>w;
+		adj[a].pb({b,w});
+	}
+
+	dijkstra(1);
+
+	int minprice=d[n];
+	vi path;
+	dfs(1,path,0,n);
+	cout<<minprice<<' '<<nominroutes<<' '<<
+		minflights-1<<' '<<maxflights-1;
+}   
  
 int main()
 {

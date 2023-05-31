@@ -4,7 +4,20 @@
 #include <bits/stdc++.h>
 
 using namespace std;
-
+struct custom_hash {
+    static uint64_t splitmix64(uint64_t x) {
+        // http://xorshift.di.unimi.it/splitmix64.c
+        x += 0x9e3779b97f4a7c15;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+        return x ^ (x >> 31);
+    }
+ 
+    size_t operator()(uint64_t x) const {
+        static const uint64_t FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();
+        return splitmix64(x + FIXED_RANDOM);
+    }
+};
 //bultin functions
 #define setbits(x) __builtin_popcountll(x) ///No of set bits 
 #define tzrobits(x) __builtin_ctz(x) ///Trailing zeros 
@@ -60,116 +73,54 @@ const int N = 200007;
 const double PI =  acos(-1.0);
 
 
-struct range {
-    ll left;
-    ll right;
-    ll index;
-};
-bool compare(range r1, range r2) {
-      if (r1.left < r2.left)
-            return true;
-      if (r1.left > r2.left)
-            return false;
-      return r1.right > r2.right;
-}
-bool compare1(pll p1, pll p2) {
-      if (p1.ft < p2.ft)
-            return true;
-      if (p1.ft > p2.ft)
-            return false;
-      return p1.sc > p2.sc;
-}
+
+void swap(ll &a, ll &b){a=a^b;b=a^b;a=a^b;}
+ //Seive of Erathanus
+bool sieve[N + 1];void createSieve(){for (ll i = 2; i < N + 1; i++)sieve[i] = true;for (ll i = 2; i * i <= N; i++)if (sieve[i])for (ll j = i * i; j <= N; j += i)sieve[j] = false;}
+ // Factorial
+ll fact[N],invFact[N];void precompute_fact(){fact[0] = 1,invFact[0]=1;for (ll i = 1; i < N; i++)fact[i] = (fact[i - 1] * i) % MOD,invFact[i]=invprime(fact[i],MOD);}
+ // Prime Divisors of a no. 
+vll primeDiv;void addPrimes(ll n){for (ll i = 2; i * i <= n; i++) if (n % i == 0){while (n % i == 0)n /= i;primeDiv.pb(i);}if (n > 1)primeDiv.pb(n);} 
+ // Divisors of a no. 
+vll Div;void addDivisors(ll n) {for (ll i = 1; i * i <= n; i++)if (n % i == 0){Div.pb(i);if (i * i != n)Div.pb(n / i);}}
+ll invprime(ll a, ll b) {return binpow(a, b - 2, b);}
+ll mod_add(ll a, ll b, ll m) {a = a % m; b = b % m; return (((a + b) % m) + m) % m;}
+ll mod_mul(ll a, ll b, ll m) {a = a % m; b = b % m; return (((a * b) % m) + m) % m;}
+ll mod_sub(ll a, ll b, ll m) {a = a % m; b = b % m; return (((a - b) % m) + m) % m;}
+ll mod_div(ll a, ll b, ll m) {a = a % m; b = b % m; return (mod_mul(a, invprime(b, m), m) + m) % m;} 
+ll mod_inv(ll A, ll M){ll x, y;ll g = gcdExtended(A, M, &x, &y);if (g != 1)return -1;   else{ll res = (x % M + M) % M;return res;}}
+ll phin(ll n) {ll number = n; if (n % 2 == 0) {number /= 2; while (n % 2 == 0) n /= 2;} for (ll i = 3; i <= sqrt(n); i += 2) {if (n % i == 0) {while (n % i == 0)n /= i; number = (number / i * (i - 1));}} if (n > 1)number = (number / n * (n - 1)) ; return number;} //O(sqrt(N))
+ll lcm(ll a,ll b){return a*b/(__gcd(a,b));}
 
 
-
-void update(ll start, vll &tree, ll n, ll value) {
-      for (; start <= n; start += start & (-start))
-            tree[start] += value;
-}
-int query(int start, vll &tree) {
-      int sum = 0;
-      for (; start > 0; start -= start & (-start))
-            sum += tree[start];
-      return sum;
-}
 
 
 
 void soln() 
 {
-
-      ll n;
-      cin >> n;
-      vector<range> v1(n);
-      vll BIT1(n + 1, 0ll);
-      for (int i = 0; i < n; i++) {
-            ll left, right;
-            cin >> left >> right;
-            v1[i] = {left, right, i};
-      }
-      sort(all(v1), compare);
-
-
-      vector<pll> opening(n);
-      vector<pll> closing(n);
-
-
-      for (int i = 0; i < n; i++) 
-      {
-            opening[i] = {v1[i].left, v1[i].index};
-            closing[i] = {v1[i].right, i};
-      }
-
-
-      sort(all(closing), compare1);
-      int i = 0, j = 0;
-      vll ans(n);
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft) 
+    int n;cin>>n;
+    int k;cin>>k;
+    vi a(n);cin>>a;
+    map<int,int>freq;
+    int ans=0,j=0;
+    for(int i=0;i<n;i++)
+    {
+        int ele=a[i];
+        if(freq.size()<k)
+        {
+            freq[ele]++;
+        }
+        else
+        {
+            int occur=0;
+            while(freq.size()>=k)
             {
-                  update(i + 1, BIT1, n, 1);
-                  i++;
+                freq[a[j]]--;
+                if(freq[a[j]]==0)freq[a[j]];
             }
-            else 
-            {
-                  update(closing[j].sc + 1, BIT1, n, -1);
-                  int val = query(closing[j].sc + 1, BIT1);
-
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans[actual_index] = val;
-                  j++;
-            }
-      }
-
-      vll ans2(n);
-      vll BIT2(n + 1, 0ll);
-      i = 0, j = 0;
-      while (i < n || j < n) 
-      {
-            if (i < n && opening[i].ft < closing[j].ft)i++;
-            else 
-            {
-                  int val = query(closing[j].sc + 1, BIT2);
-
-                  int index_in_sorted = closing[j].sc;
-                  int actual_index = opening[index_in_sorted].sc;
-                  ans2[actual_index] = val;
-
-
-                  update(1, BIT2, n, 1);
-                  if (closing[j].sc + 2 <= n)update(closing[j].sc + 2, BIT2, n, -1);
-                  j++;
-            }
-      }
-
-
-    for(auto it:ans2)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
-    for(auto it:ans)if(it)cout<<1<<' ';else cout<<0<<' ';
-    line;
+            ans+=(n-i)*occur;
+        }
+    }
 }
  
 int main()
