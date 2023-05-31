@@ -76,7 +76,7 @@ ll mod_sub(ll a, ll b, ll m) {a = a % m; b = b % m; return (((a - b) % m) + m) %
 ll mod_div(ll a, ll b, ll m) {a = a % m; b = b % m; return (mod_mul(a, invprime(b, m), m) + m) % m;} 
 ll phin(ll n) {ll number = n; if (n % 2 == 0) {number /= 2; while (n % 2 == 0) n /= 2;} for (ll i = 3; i <= sqrt(n); i += 2) {if (n % i == 0) {while (n % i == 0)n /= i; number = (number / i * (i - 1));}} if (n > 1)number = (number / n * (n - 1)) ; return number;} //O(sqrt(N))
 
-
+const int dijsks=0;
 
 void dijkstra(ll src)
 {
@@ -93,7 +93,7 @@ void dijkstra(ll src)
     d[src] = 0;
     S.insert({d[src], src}); // dis,node
     while (!S.empty())
-    {
+    { 
         int node = S.begin()->second; S.erase(S.begin());
 
         for (auto child:adj[node])
@@ -117,6 +117,7 @@ void dijkstra(ll src)
             }
         }
     }
+
 }
 
 void soln()
